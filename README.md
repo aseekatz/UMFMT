@@ -2,7 +2,7 @@
 
 ### Code description
 
-This repository includes processed sequence files, raw data files, sequence processing steps, and code used in the manuscript: Inter-individual Recovery of the Microbiota and Metabolome Over Time Following Fecal Microbiota Transplantation in Patients with Recurrent Clostridium difficile Infection (submitted), authored by Anna M. Seekatz, Casey M. Theriot, Krishna Rao, Yu-Ming Chang, Alison Freeman, John Y. Kao, and Vincent B. Young.
+This repository includes processed sequence files, raw data files, sequence processing steps, and code used in the manuscript: "Inter-individual Recovery of the Microbiota and Metabolome Over Time Following Fecal Microbiota Transplantation in Patients with Recurrent *Clostridium difficile* Infection", 2017 (submitted), authored by Anna M. Seekatz, Casey M. Theriot, Krishna Rao, Yu-Ming Chang, Alison Freeman, John Y. Kao, and Vincent B. Young.
 
 #### Abstract:
 

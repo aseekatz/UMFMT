@@ -1,7 +1,7 @@
 ## mbatch for processing UMFMT project sequences
 #### Anna M. Seekatz
 #### Note: UMFMT files were processed as part of a larger ongoing project until beta diversity analyses
-#### 
+#### processed in mothur versions: c.1.37.6 and v.1.38.0
 
 # processing sequence files:
 make.contigs(file=allhumos4.files, processors=8)

@@ -1,0 +1,55 @@
+## mbatch for processing UMFMT project sequences
+#### Anna M. Seekatz
+#### Note: UMFMT files were processed as part of a larger ongoing project until beta diversity analyses
+#### 
+
+# processing sequence files:
+make.contigs(file=allhumos4.files, processors=8)
+summary.seqs(fasta=allhumos4.trim.contigs.fasta, processors=8)
+screen.seqs(fasta=allhumos4.trim.contigs.fasta, group=allhumos4.contigs.groups, maxambig=0, maxlength=275, processors=8)
+unique.seqs(fasta=allhumos4.trim.contigs.good.fasta)
+count.seqs(name=allhumos4.trim.contigs.good.names, group=allhumos4.contigs.good.groups)
+summary.seqs(count=allhumos4.trim.contigs.good.count_table, processors=8)
+pcr.seqs(fasta=silva.seed_v119.align, start=11894, end=25319, keepdots=F, processors=8)
+system(mv silva.seed_v119.pcr.align silva.v4.fasta)
+summary.seqs(fasta=silva.v4.fasta, processors=8)
+align.seqs(fasta=allhumos4.trim.contigs.good.unique.fasta, reference=silva.v4.fasta, processors=8)
+summary.seqs(fasta=allhumos4.trim.contigs.good.unique.align, count=allhumos4.trim.contigs.good.count_table, processors=8)
+screen.seqs(fasta=allhumos4.trim.contigs.good.unique.align, count=allhumos4.trim.contigs.good.count_table, summary=allhumos4.trim.contigs.good.unique.summary, start=1968, end=11550, maxhomop=8, processors=8)
+summary.seqs(fasta=current, count=current, processors=8)
+filter.seqs(fasta=allhumos4.trim.contigs.good.unique.good.align, vertical=T, trump=., processors=8)
+unique.seqs(fasta=allhumos4.trim.contigs.good.unique.good.filter.fasta, count=allhumos4.trim.contigs.good.good.count_table)
+pre.cluster(fasta=allhumos4.trim.contigs.good.unique.good.filter.unique.fasta, count=allhumos4.trim.contigs.good.unique.good.filter.count_table, diffs=2, processors=8)
+chimera.uchime(fasta=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.fasta, count=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.count_table, dereplicate=t, processors=8)
+remove.seqs(fasta=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.fasta, accnos=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.accnos)
+summary.seqs(fasta=current, count=current, processors=8)
+classify.seqs(fasta=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table, reference=trainset10_082014.rdp.fasta, taxonomy=trainset10_082014.rdp.tax, cutoff=80)
+remove.lineage(fasta=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table, taxonomy=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.taxonomy, taxon=Chloroplast-Mitochondria-unknown-Archaea-Eukaryota)
+count.seqs(name=current, group=current)
+count.groups(count=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table)
+
+#remove.groups(count=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.count_table, fasta=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta, taxonomy=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.pick.taxonomy, groups=PBS_EXP2-PBS_exp1-WaterB_04272016-extraction_PBS_P3-extraction_PBS_p1-extraction_PBS_p2-gavage_PBS-waterD_10052015-R2_D-R6_F-d11_1291_1-d16_1191_1-d16_1191_2-d16_1293_3-d19_1192_2-d19_1294_3-humanDonor_exp1-kidney4)
+	#if in the future you want to remove samples because they are too low (I usually cutoff any sample with < 1000 seqs), remember to modify the input files for the following commands
+cluster.split(fasta=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.fasta, count=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.pick.count_table, taxonomy=allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.pick.pick.taxonomy, splitmethod=classify, taxlevel=6, cutoff=0.15, processors=1)
+system(mv allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.an.unique_list.list allhumos4.final.list)
+system(mv allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.pick.fasta allhumos4.final.fasta)
+system(mv allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.pick.pick.taxonomy allhumos4.final.taxonomy)
+system(mv allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.denovo.uchime.pick.pick.count_table allhumos4.final.count_table)
+
+# create shared file:
+count.groups(count=allhumos4.final.count_table)
+make.shared(list=allhumos4.final.list, count=allhumos4.final.count_table, label=0.03)
+classify.otu(list=allhumos4.final.list, count=allhumos4.final.count_table, taxonomy=allhumos4.final.taxonomy, label=0.03)
+remove.groups(count=allhumos4.final.count_table, fasta=allhumos4.final.fasta, taxonomy=allhumos4.final.taxonomy, list=allhumos4.final.list, shared=allhumos4.final.shared, groups=PBS1-PBS2-d1_1192_2-d1_1291_1-d1_1291_2-d32_1270_3-d41_1192_3A-d41_1272_3-d41_1294_3-d4_1293_1-filtered_sporeprep1-hh1-kidney2-mockC_10052015-mouseFMT_exp1-testX-hh2-hh3-hh4-Blank_1-MockA_04272016-d19_1275_3)
+
+# calculate alpha, beta diversity measures, and filter shared file for UMFMT specific sequence files:
+get.groups(shared=allhumos4.final.0.03.pick.shared, groups=D1_A-D1_B-D2_A-D2_B-D3_A-D3_B-D4_A-D4_B-D5_A-D5_B-R1_A-R1_B-R1_C-R1_D-R1_E-R1_F-R2_A-R2_B-R2_C-R2_D-R2_E-R2_F-R3_A-R3_B-R3_D-R3_E-R3_F-R4_A-R4_B-R4_C-R4_D-R4_E-R4_F-R5_B-R5_C-R5_D-R5_E-R5_F-R6_B-R6_C-R6_D-R6_E-R6_A)
+	# OUTPUT: allhumos4.final.0.03.pick.0.03.filter.0.03.pick.shared
+dist.shared(shared=allhumos4.final.0.03.pick.0.03.pick.shared, calc=thetayc-jclass-jest)
+pcoa(phylip=allhumos4.final.0.03.pick.0.03.pick.thetayc.0.03.lt.dist)
+nmds(phylip=allhumos4.final.0.03.pick.0.03.pick.thetayc.0.03.lt.dist, mindim=3, maxdim=3)
+summary.shared(shared=allhumos4.final.0.03.pick.0.03.pick.shared, calc=sharedsobs-braycurtis-spearman-thetayc-jsd-sharednseqs)
+summary.single(shared=allhumos4.final.0.03.pick.0.03.pick.shared, calc=simpsoneven-simpson-invsimpson-shannon-npshannon-sobs-chao-nseqs)
+# also, filter out a shared file, specifically for THESE samples:
+filter.shared(shared=allhumos4.final.0.03.pick.0.03.pick.shared, makerare=F, minpercent=0.0001)
+

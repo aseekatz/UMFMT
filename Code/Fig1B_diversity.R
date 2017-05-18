@@ -85,8 +85,42 @@ wilcox.test(invsimpson_03~timepoint, data=donors)
 #W = 14, p-value = 0.8413
 
 # comparison of pre vs post (combined):
+donors <- data[data$human_group=="donor", ]
+wilcox.test(invsimpson_03~timepoint, data=donors)
 
+### for multiple days (timepoints):
+df<-data[data$timepoint %in% c(-3, -4), c("timepoint", "invsimpson_03", "shannon_03")]
 
+modelList<-list()
+for(i in 2:3){
+    fmla <- formula(paste(names(df)[i], " ~ timepoint"))
+    modelList[[i]]<-wilcox.test(fmla, data = df, paired = FALSE)
+}
+modelList
+
+# for -2 to -4:
+W = 25, p-value = 0.007937
+
+# for -1 to -4:
+W = 28, p-value = 0.01732
+
+# for -4 to any other:
+not significant
+
+# for -2 to 1, and -1 to 1:
+W = 0, p-value = 0.007937
+W = 2, p-value = 0.0173
+
+# for -2 to 2, and -1 to 2:
+W = 2, p-value = 0.03175
+W = 2, p-value = 0.01732
+
+# for -2 to 3, and -1 to 3:
+W = 0, p-value = 0.004329
+W = 1, p-value = 0.004329
+
+# for -2 to 4:
+W = 0, p-value = 0.09524
 
 
 ```

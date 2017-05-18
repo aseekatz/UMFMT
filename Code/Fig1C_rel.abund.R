@@ -4,10 +4,11 @@
 
 ##### Files needed:
 	- directory: /Users/annaseekatz/Box Sync/Projects/UM.FMT/UMFMT_paper/16S_UMFMT
-	- Fig. 1C (files created in prep code):
+	- Fig. 1C: relative abundance plots by group
+		- (files created in prep code):
 		- relative abundance of top 98% genera: umfmt_genfrac2p.all_w.meta.txt
 		- color assignment: umfmt_genfrac2p.txt
-	- Fig. S1
+	- Fig. S1: OTU heatmap
 		- umfmt_metadata.txt
 		- mothurfiles/allhumos4.final.0.03.pick.0.03.pick.0.03.filter.shared
 		- mothurfiles/allhumos4.final.0.03.cons.taxonomy
@@ -82,6 +83,158 @@ mp3<-barplot(means[,c("donor")], beside=TRUE,col=bar.col,las=2, ylim=c(0,30), yl
 segments(mp3, means[,c("donor")]-ses[,c("donor")], mp3, means[,c("donor")]+ses[,c("donor")])
 dev.size()
 #[1] 4.825688 5.825688
+
+### stats:
+data<-df
+df<-data[!data$unhomogenized %in% c("no"), c(6, 10:57)]
+
+modelList<-list()
+for(i in 2:49){
+    fmla <- formula(paste(names(df)[i], " ~human_group"))
+    modelList[[i]]<-kruskal.test(fmla, data = df)
+}
+modelList
+
+# significant:
+data:  Fusobacterium by human_group
+Kruskal-Wallis chi-squared = 6.4286, df = 2, p-value = 0.04018
+
+data:  Collinsella by human_group
+Kruskal-Wallis chi-squared = 8.4363, df = 2, p-value = 0.01473
+
+data:  Bifidobacterium by human_group
+Kruskal-Wallis chi-squared = 11.982, df = 2, p-value = 0.002501
+
+data:  Campylobacter by human_group
+Kruskal-Wallis chi-squared = 8.8524, df = 2, p-value = 0.01196
+
+data:  Enterobacteriaceae_unclassified by human_group
+Kruskal-Wallis chi-squared = 8.6289, df = 2, p-value = 0.01337
+
+data:  Escherichia.Shigella by human_group
+Kruskal-Wallis chi-squared = 6.5105, df = 2, p-value = 0.03857
+
+data:  Anaeroglobus by human_group
+Kruskal-Wallis chi-squared = 9.2128, df = 2, p-value = 0.009988
+
+data:  Megasphaera by human_group
+Kruskal-Wallis chi-squared = 12.434, df = 2, p-value = 0.001996
+
+data:  Pediococcus by human_group
+Kruskal-Wallis chi-squared = 10.382, df = 2, p-value = 0.005567
+
+data:  Veillonellaceae_unclassified by human_group
+Kruskal-Wallis chi-squared = 13.304, df = 2, p-value = 0.001291
+
+data:  Coprococcus by human_group
+Kruskal-Wallis chi-squared = 21.636, df = 2, p-value = 2.004e-05
+
+data:  Dorea by human_group
+Kruskal-Wallis chi-squared = 12.822, df = 2, p-value = 0.001644
+
+data:  Veillonella by human_group
+Kruskal-Wallis chi-squared = 8.3022, df = 2, p-value = 0.01575
+
+data:  Clostridium_IV by human_group
+Kruskal-Wallis chi-squared = 15.3, df = 2, p-value = 0.0004761
+
+data:  Ruminococcus2 by human_group
+Kruskal-Wallis chi-squared = 18.13, df = 2, p-value = 0.0001156
+
+data:  Anaerostipes by human_group
+Kruskal-Wallis chi-squared = 21.158, df = 2, p-value = 2.544e-05
+
+data:  Oscillibacter by human_group
+Kruskal-Wallis chi-squared = 19.725, df = 2, p-value = 5.21e-05
+
+data:  Phascolarctobacterium by human_group
+
+data:  Ruminococcus by human_group
+Kruskal-Wallis chi-squared = 14.207, df = 2, p-value = 0.0008221
+
+data:  Faecalibacterium by human_group
+Kruskal-Wallis chi-squared = 14.982, df = 2, p-value = 0.000558
+
+data:  Clostridium_XlVa by human_group
+Kruskal-Wallis chi-squared = 9.5027, df = 2, p-value = 0.00864
+
+data:  Clostridium_XI by human_group
+Kruskal-Wallis chi-squared = 17.769, df = 2, p-value = 0.0001385
+
+data:  Ruminococcaceae_unclassified by human_group
+Kruskal-Wallis chi-squared = 22.003, df = 2, p-value = 1.668e-05
+
+data:  Blautia by human_group
+Kruskal-Wallis chi-squared = 14.541, df = 2, p-value = 0.0006958
+
+data:  Lactobacillus by human_group
+Kruskal-Wallis chi-squared = 15.901, df = 2, p-value = 0.0003525
+
+data:  Lachnospiraceae_unclassified by human_group
+
+data:  Clostridiales_unclassified by human_group
+Kruskal-Wallis chi-squared = 17.109, df = 2, p-value = 0.0001926
+
+data:  Firmicutes_unclassified by human_group
+Kruskal-Wallis chi-squared = 15.201, df = 2, p-value = 0.0005003
+
+data:  Bacteroides by human_group
+Kruskal-Wallis chi-squared = 21.337, df = 2, p-value = 2.327e-05
+
+data:  Alistipes by human_group
+Kruskal-Wallis chi-squared = 9.5656, df = 2, p-value = 0.008373
+
+data:  Parabacteroides by human_group
+Kruskal-Wallis chi-squared = 15.985, df = 2, p-value = 0.0003379
+
+
+# wilcoxon:
+data<-df
+df<-data[data$unhomogenized %in% c("yes") & data$human_group %in% c("pre", "post"), c(6, 10:57)]
+
+modelList<-list()
+for(i in 2:49){
+    fmla <- formula(paste(names(df)[i], " ~human_group"))
+    modelList[[i]]<-wilcox.test(fmla, data = df, paired=FALSE)
+}
+modelList
+
+# p < 0.05:
+Fusobacterium
+Campylobacter
+Enterobacteriaceae
+e.shigella
+Anaeroglobus
+Veillonella
+
+# p < 0.005:
+Collinsella
+	Bifidobacterium
+	Megasphaera
+	Pediococcus
+	Veillonellaceae
+	Dorea
+	Ruminococcus
+	Clostridium_XlVa
+	Lachnospiraceae_unclassified
+	Lactobacillus
+	Alistipes
+
+# p < 0.0005
+	Coprococcus
+	Roseburia
+	Clostridium_IV
+	Ruminococcus2
+	Anaerostipes
+	Faecalibacterium
+	Oscillibacter
+	Blautia
+	Ruminococcaceae_unclassified
+	Firmicutes_unclassified
+	Clostridium_XI
+	Clostridiales_unclassified
+	Parabacteroides
+	Bacteroides
 
 ```
 
@@ -205,7 +358,6 @@ heatmap.2(as.matrix(otus),
 legend("topleft",legend=c("donor", "post", "pre"), pt.bg=c("chartreuse4", "blue", "gold"), cex=1, pch=22, col="black")
 legend("top",legend=c("0-0.001", "0.001-0.01", "0.01-0.1", "0.1-0.5", "0.5-1"), col=c("aliceblue","lightskyblue", "deepskyblue", "dodgerblue2", "blue4"), cex=1, pch=15)
 legend("topright",legend=c("Actinobacteria","Bacteroidetes", "Firmicutes", "Fusobacteria", "Proteobacteria", "Synergistetes", "Verrucomicrobia"), pt.bg=c("darkmagenta", "darkgreen","skyblue", "darkred", "yellow", "cyan", "hotpink"), cex=1, pch=22, col="black")
-
 
 
 ```

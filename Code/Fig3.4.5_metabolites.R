@@ -65,8 +65,8 @@ longiPlot<- function(n) {
 		abline(v=0, col = "grey80", lty=2)
 		polygon(dcord.x,dcord.y,col='grey90', border=NA)
 		polygon(rcord.x,rcord.y,col='grey90', border=NA)
-		mapply(lines,xdonors,ydonors,col=dcol,pch=17,type="o", cex=0.8)
-		mapply(lines,xrecipients,yrecipients,col=rcol,pch=19,type="o", cex=0.8)
+		mapply(lines,xdonors,ydonors,col=dcol,pch=17,type="o", cex=1.2)
+		mapply(lines,xrecipients,yrecipients,col=rcol,pch=19,type="o", cex=1.2)
 		lines(unique(donors$timepoint), as.numeric(dmean), col="black", lwd=3)
 		lines(r.axis, as.numeric(rmean), col="black", lwd=3)	#weirdness 2
 		text(-3.5, max(data[,n]), "donors")
@@ -98,6 +98,97 @@ title('short chain fatty acids', outer=TRUE, line=-2)
 dev.new(width=2*4.669725, height=4.073394)
 par(mfrow=c(1,2))
 lapply(c("lactate_uM.mg", "succinate_uM.mg"), FUN=longiPlot)
+
+### Stats:
+# donor samples:
+df<-d[d$human_group %in% c("donor"), c(10,35:69)]
+
+modelList<-list()
+for(i in 2:36){
+    fmla <- formula(paste(names(df)[i], " ~ unhomogenized.x"))
+    modelList[[i]]<-wilcox.test(fmla, data = df, paired = FALSE)
+}
+modelList
+
+# only these weresignificantly impacted by homogenization
+	TCDCA W = 2, p-value = 0.03175
+	TCA W = 2.5, p-value = 0.02537
+
+# recipient samples (to donor and post/pre FMT)
+data<-d[d$unhomogenized.x %in% c("yes"), c(4,35:69)]
+df<-data[data$timepoint %in% c(0,-2),]
+
+modelList<-list()
+for(i in 2:36){
+    fmla <- formula(paste(names(df)[i], " ~ timepoint"))
+    modelList[[i]]<-wilcox.test(fmla, data = df, paired = FALSE)
+}
+modelList
+
+### comparisons between donor and:
+## -2 timepoint:
+	succinate p = 0.01587
+#valerate p-value = 0.007937
+#LCA W = 3, p-value = 0.05556
+#HDCA W = 3, p-value = 0.04491
+	CA W = 24, p-value = 0.01587
+
+## -1 timepoint:
+	lactate W = 19, p-value = 0.03175
+#valerate W = 4, p-value = 0.05195
+#acetate W = 5, p-value = 0.08225
+#LCA W = 5, p-value = 0.08214
+#HDCA W = 4, p-value = 0.04437
+	CA W = 27, p-value = 0.0303
+#GDCA W = 3, p-value = 0.03534
+
+## 2 timepoint:
+#GHDCA W = 25.5, p-value = 0.04648
+
+### between -1 timepoints in recipients and:
+# 4:
+#valerate W = 5, p-value = 0.04113
+	acetate W = 4, p-value = 0.02597
+#LCA W = 3, p-value = 0.06911
+# 3:
+#lactate W = 21, p-value = 0.06667
+	butyrate W = 2, p-value = 0.008658
+	acetate W = 2, p-value = 0.008658
+	LCA W = 3, p-value = 0.02002
+	CA W = 36, p-value = 0.002165
+	TCDCA W = 33, p-value = 0.01515
+# 2:
+#acetate W = 6, p-value = 0.06494
+	LCA W = 3, p-value = 0.02002
+#CA W = 30, p-value = 0.06494
+	TCDCA W = 31, p-value = 0.04113
+# 1:
+#valerate W = 1, p-value = 0.008658
+#butyrate W = 4, p-value = 0.05195
+	propionate W = 3, p-value = 0.0303
+#acetate W = 4, p-value = 0.05195
+#LCA W = 3, p-value = 0.06911
+
+### between -2 timepoints in recipients and:
+# 1:
+#heptanoate W = 0, p-value = 0.007937
+#octanoate W = 2, p-value = 0.03615
+#hexanoate W = 0, p-value = 0.007937
+#valerate W = 0, p-value = 0.007937
+#butyrate W = 3, p-value = 0.05556
+#TCA W = 18, p-value = 0.06169
+# 2:
+#LCA W = 4, p-value = 0.05195
+#CA W = 26, p-value = 0.05195
+	TCA W = 28, p-value = 0.02217
+# 3:
+#succinate W = 4, p-value = 0.05195
+	butyrate W = 3, p-value = 0.0303
+	CA W = 30, p-value = 0.004329
+	TCDCA W = 27, p-value = 0.0303
+	TCA W = 28, p-value = 0.02127
+#butyrate W = 5, p-value = 0.08225
+#acetate W = 5, p-value = 0.08225
 
 ```
 

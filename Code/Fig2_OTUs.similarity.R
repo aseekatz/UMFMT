@@ -90,6 +90,25 @@ distances<-as.character(colnames(df)[19:26])
 par(mfrow=c(2, 4))
 lapply(distances, FUN=simplot)
 
+## stats:
+kruskal.test(thetayc~COMP, data=mcomp)
+
+# adjust posthoc:
+library(PMCMR)
+posthoc.kruskal.nemenyi.test(x=mcomp$thetayc, g=mcomp$COMP, method="Tukey")
+#	Pairwise comparisons using Tukey and Kramer (Nemenyi) test	
+#                   with Tukey-Dist approximation for independent samples 
+
+#data:  mcomp$thetayc and mcomp$COMP 
+
+#                 intra-post intra-pre-post inter-post
+#intra-pre-post   2.9e-14    -              -         
+#inter-post       1.7e-07    4.4e-09        -         
+#inter-post-donor 0.00016    9.5e-12        0.20233   
+
+#P value adjustment method: none 
+
+
 ```
 
 
@@ -198,7 +217,7 @@ distplot_overtime<- function(n) {
 		# if you want to add individual lines:
 	colors<-colorRampPalette(c("grey20","grey80"))(n = 5)
 	xreclines <- tapply(df$TIME, df$COMP, function(x) return(x))
-	xreclines <- tapply(df[,n], df$COMP, function(x) return(x))
+	yreclines <- tapply(df[,n], df$COMP, function(x) return(x))
 	mapply(lines,xreclines[2:6],yreclines[2:6],col=colors,pch=".",type="o")
 		# add individual dots:
 	points(jitter(df$TIME), df[,n], col=adjustcolor("grey45", alpha=0.5), pch=21, bg="grey80", cex=0.7)
@@ -253,6 +272,33 @@ legend("bottomleft", c("donor-recipient pairs", "random donor"), col=c("grey45",
 lapply(c("sharedsobs"), FUN=addgroup_distplot_overtime)
 		# note: for some reason, mapply for individual lines does not work...
 		# also, can't topple these functions together
+
+### stats:
+# comparing randoms to DR pairs, at each timepoint:
+comp1<-comp[comp$COMP2 %in% c("DONORS", "RDONORS"),]
+wilcox.test(thetayc~COMP2, data=comp1)
+	#W = 4, p-value = 1.964e-05
+	
+comp2<-comp[comp$COMP2 %in% c("DR", "RANDOM") & comp$TIME %in% c(-2),]
+comp2<-comp[comp$COMP2 %in% c("DR", "RANDOM") & comp$TIME %in% c(-1),]
+wilcox.test(thetayc~COMP2, data=comp2)
+	#both are NS
+	
+comp3<-comp[comp$COMP2 %in% c("DR", "RANDOM") & comp$TIME %in% c(1),]
+wilcox.test(thetayc~COMP2, data=comp3)
+	#W = 18, p-value = 0.08142
+	
+comp4<-comp[comp$COMP2 %in% c("DR", "RANDOM") & comp$TIME %in% c(2),]
+wilcox.test(thetayc~COMP2, data=comp4)
+	#W = 4, p-value = 0.001897
+	
+comp5<-comp[comp$COMP2 %in% c("DR", "RANDOM") & comp$TIME %in% c(3),]
+wilcox.test(thetayc~COMP2, data=comp5)
+	#W = 32, p-value = 0.09591
+	
+comp6<-comp[comp$COMP2 %in% c("DR", "RANDOM") & comp$TIME %in% c(4),]
+wilcox.test(thetayc~COMP2, data=comp6)
+	#W = 34, p-value = 0.3027
 
 
 ```

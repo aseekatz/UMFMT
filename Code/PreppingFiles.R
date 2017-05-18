@@ -4,19 +4,72 @@
 ######## directory: /Users/annaseekatz/Box Sync/Projects/UM.FMT/UMFMT_paper/16S_UMFMT
 
 ##### Mothur output files and resulting modified files:
+	- alpha diversity measures --> umfmt_summary.txt
+		- input file is a summary file of alpha diversity measures created in mothur
+		- output file combines these with metadata
 	- allhumos4.final.0.03.cons.taxonomy --> allhumos4.taxonomy.names.txt
 		- input file lists the taxonomic classifications for each of the OTUs at 0.03 cutoff
 		- output file was modified to reflect new OTU names that includes the taxonomy, as well as cleaner classifications
 	- allhumos4.final.0.03.pick.0.03.filter.0.03.pick.summary --> umfmt.betasummary.txt
-		- input file represents pairwise distances generated in mothur, filtered to include only relevant samples
+		- input file represents pairwise distances (beta diversity) generated in mothur, filtered to include only relevant samples
 		- output file adds sample meta data to sampleIDs
 	- allhumos4.final.0.03.pick.0.03.pick.0.03.filter.shared, umfmt_metadata.txt --> umfmt_otus.w.meta.txt
 		- input .shared file was previously filtered using the specified measures
 		- output file combines metadata with OTU counts
+	- combining all data (metadata, alpha metrics, relative abundance of OTUs, and metabolites) --> umfmt_allmeasures.txt
+		- all data input files
+		- output file has all variables, combined in one file
+	- --> umfmt_genfrac2p.all_w.meta.txt
+		- input file is a file produced in mothur classifying sequences directly to the RDP database
+		- output file is a file with phylotype information (relative abundance of genus-level sequence assignments) 
+	
+##### Other files relevant to project:
 	- compiling GEE results from Krishna's code --> fmtrecip_allresults.txt
-		
-		
-		
+		- this represents Table S3
+
+##### Data files compiled from experiments or from cores:
+	- umfmt_metadata.txt
+	- umfmt_SCFA.txt
+	- umfmt_suclac.txt
+	- 	
+
+###### alpha summaries --> umfmt_summary.txt
+	- allhumos4.final.0.03.pick.0.03.pick.groups.summary
+	- allhumos4.final.0.03.pick.0.03.pick.thetayc.0.03.lt.pcoa.axes
+	- allhumos4.final.0.03.pick.0.03.pick.thetayc.0.03.lt.nmds.axes
+	- umfmt_metadata.txt
+	
+```
+# read in files and merge together:
+meta<-read.table(file="umfmt_metadata.txt", header=TRUE)
+# add a '_hom' to those samples that were unhomogenized:
+meta$group2<-meta$human_group
+meta$group2<-as.character(meta$group2)
+meta$group2[meta$unhomogenized==c("no")]<-"donor_hom"
+meta$group2<-as.factor(meta$group2)
+
+pcoa<-read.table(file="mothurfiles/allhumos4.final.0.03.pick.0.03.pick.thetayc.0.03.lt.pcoa.axes", header=TRUE)
+	pcoa<-pcoa[,1:4]
+	colnames(pcoa)[2:4] <- paste("pcoa03", colnames(pcoa)[2:4], sep = "_")
+	colnames(pcoa)[1]<-"sampleID"
+nmds<-read.table(file="mothurfiles/allhumos4.final.0.03.pick.0.03.pick.thetayc.0.03.lt.nmds.axes", header=TRUE)
+	nmds<-nmds[1:4]
+	colnames(nmds)[2:4] <- paste("nmds03", colnames(nmds)[2:4], sep = "_")
+	colnames(nmds)[1]<-"sampleID"
+sum<-read.table(file="mothurfiles/allhumos4.final.0.03.pick.0.03.pick.groups.summary", header=TRUE)
+	sum<-subset(sum, select=-c(label))
+	colnames(sum)[2:16] <- paste(colnames(sum)[2:16], "03", sep = "_")
+	colnames(sum)[1]<-"sampleID"
+
+combined.pcoa<-merge(meta, pcoa, by.x=c("seqID"), by.y=c("sampleID"))
+combined.nmds<-merge(combined.pcoa, nmds, by.x=c("seqID"), by.y=c("sampleID"))
+combined.sum<-merge(combined.nmds, sum, by.x=c("seqID"), by.y=c("sampleID"))
+#write.table(combined.sum, 'umfmt_summary.txt',quote=FALSE,sep="\t", col.names=TRUE, row.names=FALSE)
+
+```
+
+
+
 ###### allhumos4.final.0.03.cons.taxonomy --> allhumos4.taxonomy.names.txt
 
 ```
@@ -98,8 +151,186 @@ sum.shared<-droplevels(sum.shared)
 
 ```
 
+###### Combining bile acid data with metadata:
+	- umfmt_summary.txt
+	- umfmt_metadata.txt
+	- umfmt_bile_acids.txt
 
+```
+# combine with meta:
+combined<-read.table(file="umfmt_summary.txt", header=TRUE)
+meta<-read.table(file="umfmt_metadata.txt", header=TRUE)
+bas<-read.table(file="supervised_bile_acids.txt", header=TRUE)
 
+div<-combined[, c(2, 11:32)]
+meta2<-merge(meta, div, by="sampleID", all.x=TRUE)
+data<-merge(meta2, bas, by.x="sampleID", by.y="Samples")
+#write.table(data, file="umfmt_summary.w.bile.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
+
+```
+
+###### combining all data (metadata, alpha metrics, relative abundance of OTUs, and metabolites) --> umfmt_allmeasures.txt
+	- umfmt_summary.txt
+	- umfmt_metadata.txt
+	- umfmt_summary.w.bile.txt
+	- umfmt_SCFA.txt
+	- umfmt_suclac.txt
+	- mothurfiles/allhumos4.final.0.03.pick.0.03.pick.0.03.filter.shared
+
+```
+combined.raw<-read.table(file="umfmt_summary.txt", header=TRUE)
+	combined<-combined.raw[, c(2, 8:ncol(combined.raw))]
+meta.raw<-read.table(file="umfmt_metadata.txt", header=TRUE)
+	meta<-meta.raw[!is.na(meta.raw$patientID), ]
+bas.raw<-read.table(file="umfmt_summary.w.bile.txt", header=TRUE)
+	bas<-bas.raw[, c(1, 32:56)]
+scfa.raw<-read.table(file="../SCFA/umfmt_SCFA.txt", header=T)
+	scfa<-scfa.raw[, c(2, 12:ncol(scfa.raw))]
+scfa2.raw<-read.table(file="../SCFA/umfmt_suclac.txt", header=T)
+	scfa2<-scfa2.raw[, c(3, 5, 8)]
+shared<-read.table(file="mothurfiles/allhumos4.final.0.03.pick.0.03.pick.0.03.filter.shared", header=TRUE, row.names=2)
+	otu<-subset(shared, select =-c(label, numOtus) )
+	otu.rel<-otu/rowSums(otu)
+	otu.rel$sampleID<-rownames(otu.rel)
+	
+# combine all together (note: some info is missing for some...)
+combo<-merge(meta, combined, by="sampleID", all.x=TRUE)
+combo2<-merge(combo, bas, by="sampleID", all.x=TRUE)
+combo3<-merge(combo2, scfa, by="sampleID", all.x=TRUE)
+combo4<-merge(combo3, scfa2, by="sampleID", all.x=TRUE)
+combo5<-merge(combo4, otu.rel, by="sampleID", all.x=TRUE)
+#write.table(combo5, file="umfmt.allmeasures.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
+
+```
+
+###### umfmt_genfrac2p.all_w.meta.txt
+	- allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.tax.summary
+	- allhumos4_all.genera.txt	#created previously with mouse data)
+	- umfmt_summary.txt (as metadata)
+	
+```
+# step 1: create a 'phylotype' file with phylum levels
+
+# read in mothur file; get genus-level assignments and assign phyla
+tax<-read.table(file="mothurfiles/allhumos4.trim.contigs.good.unique.good.filter.unique.precluster.pick.rdp.wang.tax.summary", header=TRUE)
+
+# get phylum designations for level 6 (genera) rows, and curate levels for graphing (later):
+tax2<-tax[which(tax$taxlevel==2), ]
+tax2[, c("rankID", "taxon")]
+tax6<-tax[which(tax$taxlevel==6), ]
+tax6$rankID<-gsub("^0.1.1.*", "20_Archaea_unclassified", tax6$rankID)
+tax6$rankID<-gsub("^0.1.3.*", "20_Euryarchaeota", tax6$rankID)
+tax6$rankID<-gsub("^0.1.2.*", "20_Crenarchaeota", tax6$rankID)
+tax6$rankID<-gsub("^0.1.4.*", "20_Thaumarchaeota", tax6$rankID)
+tax6$rankID<-gsub("^0.2.1\\..*", "10_Acidobacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.2\\..*", "04_Actinobacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.3\\..*", "20_Atribacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.4\\..*", "20_BRC1", tax6$rankID)
+tax6$rankID<-gsub("^0.2.5\\..*", "11_Unclassified", tax6$rankID)
+tax6$rankID<-gsub("^0.2.6\\..*", "01_Bacteroidetes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.7\\..*", "20_Candidatus_Saccharibacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.8\\..*", "20_Chlamydiae", tax6$rankID)
+tax6$rankID<-gsub("^0.2.9\\..*", "20_Chloroflexi", tax6$rankID)
+tax6$rankID<-gsub("^0.2.10..*", "20_Cloacimonetes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.11..*", "20_Cyanobacteria/Chloroplast", tax6$rankID)
+tax6$rankID<-gsub("^0.2.12..*", "20_Deferribacteres", tax6$rankID)
+tax6$rankID<-gsub("^0.2.13..*", "20_Deinococcus-Thermus", tax6$rankID)
+tax6$rankID<-gsub("^0.2.14..*", "20_Fibrobacteres", tax6$rankID)
+tax6$rankID<-gsub("^0.2.15..*", "02_Firmicutes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.16..*", "06_Fusobacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.17..*", "20_Gemmatimonadetes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.18..*", "20_Ignavibacteriae", tax6$rankID)
+tax6$rankID<-gsub("^0.2.19..*", "20_Latescibacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.20..*", "20_Lentisphaerae", tax6$rankID)
+tax6$rankID<-gsub("^0.2.21..*", "20_Microgenomates", tax6$rankID)
+tax6$rankID<-gsub("^0.2.22..*", "20_Nitrospinae", tax6$rankID)
+tax6$rankID<-gsub("^0.2.23..*", "20_Nitrospinae", tax6$rankID)
+tax6$rankID<-gsub("^0.2.24..*", "20_Parcubacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.25..*", "20_Planctomycetes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.26..*", "03_Proteobacteria", tax6$rankID)
+tax6$rankID<-gsub("^0.2.27..*", "09_Spirochaetes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.28..*", "08_Synergistetes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.29..*", "07_Tenericutes", tax6$rankID)
+tax6$rankID<-gsub("^0.2.30..*", "20_Thermotogae", tax6$rankID)
+tax6$rankID<-gsub("^0.2.31..*", "05_Verrucomicrobia", tax6$rankID)
+tax6$rankID<-gsub("^0.2.32..*", "20_candidate_division_WPS-2", tax6$rankID)
+tax6$rankID<-gsub("^0.3.1..*", "11_unknown_unclassified", tax6$rankID)
+colnames(tax6)[2]<-"phylum"
+	# remove samples w/ <5000:
+subtax6<-subset(tax6, select=-c(taxlevel, daughterlevels))
+subtax6<-subtax6[order(subtax6$phylum, -subtax6$total), ]
+taxmatrix<-subtax6[, c(4:ncol(subtax6))]
+duplicated(subtax6$taxon)			#identify any duplicated taxon names
+subtax6$taxon<-as.character(subtax6$taxon)
+subtax6$taxon[402]<-"Actinobacteria_unclassified2"
+subtax6$taxon<-as.factor(subtax6$taxon)
+rownames(taxmatrix)<-subtax6$taxon
+genera<- taxmatrix[, colSums(taxmatrix)>5000,]
+	# get rel. abund fraction:
+genmatrix<-as.data.frame(t(genera))
+genera.fr<-genmatrix/rowSums(genmatrix)*100
+genus.fr<-t(genera.fr)
+all.genera<-cbind(subtax6[1:3], genus.fr)
+#write.table(all.genera, file="allhumos4_all.genera.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
+# note: this file included a larger dataset, and will be filtered to show the samples relevant to this project
+
+### step 2: combine with metadata and filter out data relevant to human stuff:
+
+# read in files
+combined<-read.table(file="umfmt_summary.txt", header=TRUE)
+genbar<-read.table(file="allhumos4_all.genera.txt", header=TRUE, row.names=2)
+meta<-combined[, 1:9]
+
+# filter out human samples only:
+rownames(genbar)<-genbar$taxon
+humans<-genbar[ , grep("^D.*|^R.*", colnames(genbar))]	# pretty close--just remove the one mouse sample
+humans<-humans[, !colnames(humans) %in% c('R_WT_1', 'Rwt_2')]
+
+# now filter to 1 or 2%:
+phyla<-subtax6[1:3]
+genus1<- humans[rowSums(humans>=1)>=1,]
+namelist<-as.character(rownames(genus1))
+phyla1p<-phyla[phyla$taxon %in% namelist, ]
+genera1<-cbind(phyla1p, genus1)
+	# get top 2%
+genus2<- humans[rowSums(humans>=2)>=2,]
+namelist<-as.character(rownames(genus2))
+phyla2p<-phyla[phyla$taxon %in% namelist, ]
+genera2<-cbind(phyla2p, genus2)
+
+# add some colors to the levels, by phyla:
+summary(as.factor(genera2$phylum))
+color<-c("darkgreen","green3","lightgreen","seagreen",
+		"midnightblue","mediumblue","blue3","blue","dodgerblue4","dodgerblue1","deepskyblue4","deepskyblue1","skyblue3","skyblue","steelblue4","steelblue1","royalblue4","royalblue1","slateblue4","purple3","orchid3","plum4","plum1","pink3","pink","lightpink1","lightpink3","palevioletred4","palevioletred1","magenta4","deeppink4","mediumvioletred","magenta3","magenta1","thistle",
+		"yellow2","darkgoldenrod3","goldenrod2","orange2","yellow4", 
+		"maroon", "red4", 
+		"hotpink", "red", "cyan", "black", "grey67")
+genera2<-cbind(phyla2p, color, genus2)
+#write.table(genera2, file="umfmt_genfrac2p.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
+
+# read in file and combine with meta:
+genbar<-read.table(file="umfmt_genfrac2p.txt", header=TRUE, row.names=2)
+	rm_g<-subset(genbar, select =-c(phylum, color, total) )
+	barg<-as.data.frame(t(rm_g))
+	barg$other<-100-rowSums(barg)
+	others<-100-colSums(barg)
+	barg$sampleID<-rownames(barg)
+	col.gen<-c(as.character(genbar$color), "grey47")
+	#barg$sampleID<-gsub("X19_", "19_", barg$sampleID)
+bar<-merge(meta, barg, by.x=c("seqID"), by.y=c("sampleID"))
+#write.table(bar, 'umfmt_genfrac2p.all_w.meta.txt',quote=FALSE,sep="\t", col.names=NA)
+
+# if you want all genera (including the rarer guys), do this:
+meta<-read.table(file="../allhumos3/allhumos_metadata_corrected.txt", header=TRUE)
+genbar<-read.table(file="allhumos4_all.genera.txt", header=TRUE, row.names=2)
+	#genbar5<- genbar[rowSums(genbar[ ,3:ncol(genbar)]>=5)>=5,]
+	rm_g<-subset(genbar, select =-c(phylum, total) )
+	barg<-as.data.frame(t(rm_g))
+	barg$sampleID<-rownames(barg)
+bar<-merge(meta, barg, by.x=c("seqID"), by.y=c("sampleID"))
+#write.table(bar, 'allhumos4_allgenera_w.meta.txt',quote=FALSE,sep="\t", col.names=NA)
+
+```
 
 ###### compiling GEE results from Krishna's code --> fmtrecip_allresults.txt
 
@@ -161,12 +392,9 @@ catfmtrecip<-arrange(catfmtrecip, sampleID)
 
 ## can use this file going forward
 
-```
-
 ####### Butyrate:
 
 
-```
 # Butyrate first:
 results<-matrix(data=NA, nrow = end-start+1, ncol = 3)
 colnames(results)<-c("variable","P_value","coefficient")
@@ -232,11 +460,9 @@ summary(catmodel)
 
 #### not sure how to get outcome from this; will ask Krishna
 
-```
 
 ####### Acetate:
 
-```
 # acetate:
 results_acetate<-matrix(data=NA, nrow = end-start+1, ncol = 3)
 colnames(results_acetate)<-c("variable","P_value","coefficient")
@@ -268,11 +494,8 @@ aceresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(aceresults_classified, file="Anna_test/fmtrecip_ace.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
 
-```
-
 ####### Propionate:
 
-```
 # propionate
 
 results_propionate<-matrix(data=NA, nrow = end-start+1, ncol = 3)
@@ -304,11 +527,9 @@ topresults$metabolite<-"propionate"
 proresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(proresults_classified, file="Anna_test/fmtrecip_pro.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
-```
 
 ####### CA:
 
-```
 # CA:
 
 results_CA<-matrix(data=NA, nrow = end-start+1, ncol = 3)
@@ -342,11 +563,9 @@ topresults$metabolite<-"CA"
 CAresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(CAresults_classified, file="Anna_test/fmtrecip_CA.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
-```
 
 ####### TCA:
 
-```
 # TCA:
 
 results_TCA<-matrix(data=NA, nrow = end-start+1, ncol = 3)
@@ -380,11 +599,9 @@ topresults$metabolite<-"TCA"
 TCAresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(TCAresults_classified, file="Anna_test/fmtrecip_TCA.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
-```
 
 ####### TCDCA
 
-```
 # TCDCA
 
 results_TCDCA<-matrix(data=NA, nrow = end-start+1, ncol = 3)
@@ -418,11 +635,9 @@ topresults$metabolite<-"TCDCA"
 TCDCAresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(TCDCAresults_classified, file="Anna_test/fmtrecip_TCDCA.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
-```
 
 ####### DCA
 
-```
 # DCA:
 
 results_DCA<-matrix(data=NA, nrow = end-start+1, ncol = 3)
@@ -456,11 +671,9 @@ topresults$metabolite<-"DCA"
 DCAresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(DCAresults_classified, file="Anna_test/fmtrecip_DCA.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
-```
 
 ####### LCA
 
-```
 # LCA:
 
 results_LCA<-matrix(data=NA, nrow = end-start+1, ncol = 3)
@@ -494,11 +707,9 @@ topresults$metabolite<-"LCA"
 LCAresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(LCAresults_classified, file="Anna_test/fmtrecip_LCA.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
-```
 
 ####### UDCA
 
-```
 # UDCA:
 
 results_UDCA<-matrix(data=NA, nrow = end-start+1, ncol = 3)
@@ -533,13 +744,13 @@ topresults$metabolite<-"UDCA"
 UDCAresults_classified<-merge(topresults, taxanames, by.x="variable", by.y="OTU")
 #write.table(UDCAresults_classified, file="Anna_test/fmtrecip_UDCA.results.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 
-```
 
 ####### Combine all the results together for a complete file:
 
-```
 allresults<-rbind(butresults_classified, aceresults_classified, proresults_classified, CAresults_classified, TCAresults_classified, TCDCAresults_classified, DCAresults_classified, LCAresults_classified, UDCAresults_classified)
 #write.table(allresults, file="Anna_test/fmtrecip_allresults.txt", sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
+
+#### This final file was used for Table S3
 
 ```
 
